@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates && 
     unzip \
     graphviz \
     gdb \
+    clang lld lldb clang-format \
     # for opencv
     libgl1 \
     libnuma1 libatlas-base-dev \
