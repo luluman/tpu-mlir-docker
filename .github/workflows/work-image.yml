@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v1
       - name: Login to DockerHub Registry
         run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-      - name: Build the latest Docker image
+      - name: Build the tpumlir base image
         run: |
           docker build . --file tpuc_dev_base.Dockerfile --tag dev-base
           docker image tag dev-base mattlu/tpumlir-dev:22.04-base
@@ -30,14 +30,7 @@ jobs:
         run: docker push --all-tags mattlu/tpumlir-dev
 
 
-
-    steps:
-      - id: commit
-        uses: pr-mpt/actions-commit-hash@v2
-      - uses: actions/checkout@v1
-      - name: Login to DockerHub Registry
-        run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-      - name: Build the latest Docker image
+      - name: Build the tpumlir dev image
         run: |
           docker build . --file tpuc_dev_python.Dockerfile --tag dev-python
           docker image tag dev-python mattlu/tpumlir-dev:22.04
