@@ -4,7 +4,6 @@ on:
   push:
     paths:
       - 'tpuc_dev_base.Dockerfile'
-      - 'tpuc_dev_python.Dockerfile'
 
   workflow_dispatch:
 #  pull_request:
