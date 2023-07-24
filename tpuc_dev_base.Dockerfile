@@ -29,11 +29,18 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates && 
     # for opencv
     libgl1 \
     libnuma1 libatlas-base-dev \
+    libncurses5 libncurses5-dev libcairo2-dev\
     # for document
     texlive-xetex && \
     # clenup
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 0 && \
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+    python3.10 get-pip.py && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3 0
 
 ENV CMAKE_VERSION 3.25.3
 
