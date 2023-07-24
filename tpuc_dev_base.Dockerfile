@@ -10,8 +10,6 @@ ENV TZ=Asia/Shanghai
 RUN apt-get update && apt-get install -y apt-transport-https ca-certificates && \
     apt-get install -y build-essential \
     git vim sudo \
-    # md5
-    libssl-dev \
     # python
     python3-dev \
     python3-venv \
@@ -19,6 +17,8 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates && 
     virtualenv \
     swig \
     tzdata \
+    # tablgen
+    libncurses5-dev libncurses5 \
     # tools
     ninja-build \
     parallel \
@@ -26,6 +26,9 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates && 
     unzip \
     graphviz \
     gdb \
+    ccache \
+    clang lld lldb clang-format \
+    libomp-dev \
     # for opencv
     libgl1 \
     libnuma1 libatlas-base-dev \
@@ -61,10 +64,6 @@ RUN TZ=Asia/Shanghai \
     && unzip /usr/share/fonts/fandol.zip -d /usr/share/fonts \
     && rm /usr/share/fonts/fandol.zip \
     && git config --global --add safe.directory '*' \
-    # install ccache
-    && wget "https://github.com/ccache/ccache/releases/download/v4.7.4/ccache-4.7.4-linux-x86_64.tar.xz" -O /tmp/ccache-4.7.4-linux-x86_64.tar.xz \
-    && tar xf /tmp/ccache-4.7.4-linux-x86_64.tar.xz -C /tmp \
-    && mv /tmp/ccache-4.7.4-linux-x86_64/ccache /usr/local/bin/ \
     && rm -rf /tmp/*
 
 ENV LC_ALL=C.UTF-8

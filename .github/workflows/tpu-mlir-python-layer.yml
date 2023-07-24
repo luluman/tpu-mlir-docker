@@ -1,0 +1,30 @@
+name: tpumlir-dev:22.04-python
+
+on:
+  push:
+    paths:
+      - 'tpuc_dev_python.Dockerfile'
+
+  workflow_dispatch:
+#  pull_request:
+#    branches: [ master ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: commit
+        uses: pr-mpt/actions-commit-hash@v2
+      - uses: actions/checkout@v1
+      - name: Login to DockerHub Registry
+        run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Build the tpumlir dev image
+        run: |
+          docker build . --file tpuc_dev_python.Dockerfile --tag dev-python
+          docker image tag dev-python mattlu/tpumlir-dev:22.04
+      - name: Push the latest Docker image
+        run: docker push --all-tags mattlu/tpumlir-dev
