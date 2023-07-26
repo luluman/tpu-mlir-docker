@@ -50,8 +50,8 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmak
     && rm /tmp/cmake-install.sh
 
 # MLIR python dependency
-RUN pip install pybind11-global==2.11.1 numpy==1.24.3 PyYAML==5.4.1
-
+RUN pip install pybind11-global==2.11.1 numpy==1.24.3 PyYAML==5.4.1 && \
+    rm -rf ~/.cache/pip/*
 
 ARG LLVM_VERSION="c67e443895d5b922d1ffc282d23ca31f7161d4fb"
 RUN git clone https://github.com/llvm/llvm-project.git && \
@@ -69,7 +69,7 @@ RUN git clone https://github.com/llvm/llvm-project.git && \
     -DCMAKE_INSTALL_PREFIX=/usr/local \
     -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_ENABLE_LLD=ON && \
     cmake --build . --target install && \
-    rm ./* -rf
+    rm -rf ./* /tmp/* ~/.cache/*
 
 
 RUN TZ=Asia/Shanghai \
