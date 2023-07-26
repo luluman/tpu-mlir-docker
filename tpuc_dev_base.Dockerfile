@@ -49,6 +49,28 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmak
     && /tmp/cmake-install.sh --skip-license --prefix=/usr/local \
     && rm /tmp/cmake-install.sh
 
+# MLIR python dependency
+RUN pip install pybind11-global==2.11.1 numpy==1.24.3 PyYAML==5.4.1
+
+
+ARG LLVM_VERSION="c67e443895d5b922d1ffc282d23ca31f7161d4fb"
+RUN git clone https://github.com/llvm/llvm-project.git && \
+    cd llvm-project/ && \
+    git checkout ${LLVM_VERSION} && \
+    mkdir build && cd build && \
+    cmake -G Ninja ../llvm \
+    -DLLVM_ENABLE_PROJECTS="mlir" \
+    -DLLVM_TARGETS_TO_BUILD="" \
+    -DLLVM_ENABLE_ASSERTIONS=ON \
+    -DLLVM_INCLUDE_TESTS=OFF \
+    -DMLIR_INCLUDE_TESTS=OFF \
+    -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_ENABLE_LLD=ON && \
+    cmake --build . --target install && \
+    rm ./* -rf
+
 
 RUN TZ=Asia/Shanghai \
     && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
