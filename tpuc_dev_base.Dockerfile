@@ -69,7 +69,8 @@ RUN git clone https://github.com/llvm/llvm-project.git && \
     -DCMAKE_INSTALL_PREFIX=/usr/local \
     -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_ENABLE_LLD=ON && \
     cmake --build . --target install && \
-    rm -rf ./* /tmp/* ~/.cache/*
+    cd / && rm -rf llvm-project /tmp/* ~/.cache/*
+
 
 
 RUN TZ=Asia/Shanghai \
