@@ -1,6 +1,11 @@
-FROM ubuntu:22.04 as builder
+FROM ubuntu:22.04 as base
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV TZ=Asia/Shanghai
+
+# ********************************************************************************
+#
+# stage 0: base
+# ********************************************************************************
 
 RUN apt-get update && apt-get install -y apt-transport-https ca-certificates && \
     apt-get install -y build-essential \
@@ -66,6 +71,22 @@ RUN git clone https://github.com/llvm/llvm-project.git && \
     cmake --build . --target install && \
     cd / && rm -rf llvm-project /tmp/* ~/.cache/*
 
+ARG FLATBUFFERS_VERSION="e2be0c0b0605b38e11a8710a8bae38d7f86a7679"
+RUN git clone https://github.com/google/flatbuffers.git &&\
+    cd flatbuffers && git checkout ${FLATBUFFERS_VERSION} && \
+    mkdir -p build && cd build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local \
+    cmake --build . --target install && \
+    cd / && rm -rf flatbuffers /tmp/* ~/.cache/*
+
+
+ARG ONEDNN_VERSION="5aabea153825347afa92a2d9f69dd893246bea45"
+RUN git clone https://github.com/oneapi-src/oneDNN.git && \
+    cd oneDNN && git checkout ${ONEDNN_VERSION} && \
+    mkdir -p build && cd build && \
+    cmake .. -DDNNL_CPU_RUNTIME=OMP -DCMAKE_INSTALL_PREFIX=/usr/local && \
+    cmake --build . --target install && \
+    cd / && rm -rf oneDNN /tmp/* ~/.cache/*
 
 
 RUN TZ=Asia/Shanghai \
@@ -79,15 +100,12 @@ RUN TZ=Asia/Shanghai \
     && git config --global --add safe.directory '*' \
     && rm -rf /tmp/*
 
-ENV LC_ALL=C.UTF-8
-
-WORKDIR /workspace
 # ********************************************************************************
 #
-# satge 1 caffe
+# stage 1: caffe
 # ********************************************************************************
 
-FROM builder as builder1
+FROM base as caffe_builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libboost-all-dev \
     libgflags-dev \
@@ -101,8 +119,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libopenblas-dev
 # RUN pip install numpy
 WORKDIR /root
+
+ARG CAFFE_VERSION="6b665ea602f602502121ca3dc84f58e801fcaa13"
 RUN git clone https://github.com/sophgo/caffe.git && \
-    mkdir -p caffe/build && cd caffe/build && \
+    cd caffe && git checkout ${CAFFE_VERSION} && \
+    mkdir -p build && cd build && \
     cmake -G Ninja .. \
     -DCPU_ONLY=ON -DUSE_OPENCV=OFF \
     -DBLAS=open -DUSE_OPENMP=TRUE \
@@ -110,22 +131,33 @@ RUN git clone https://github.com/sophgo/caffe.git && \
     -Dpython_version="3" \
     -DCMAKE_INSTALL_PREFIX=caffe && \
     cmake --build . --target install
-RUN cd /root/caffe/python/caffe && rm _caffe.so && cp /root/caffe/build/lib/_caffe.so .
+RUN cd /root/caffe/python/caffe && \
+    cp -f /root/caffe/build/lib/_caffe.so . \
+    cp -rf /root/caffe/src/caffe/proto .
+
 
 # ********************************************************************************
 #
-# satge 2 
+# stage 2: final
 # ********************************************************************************
-FROM builder as builder2
-COPY --from=builder1 /root/caffe/python/caffe /usr/local/python_packages/caffe
-COPY --from=builder1 /root/caffe/src/caffe/proto /usr/local/python_packages/proto
-COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.74.0 /usr/local/lib/
-COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libboost_python310.so.1.74.0 /usr/local/lib/
-COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libboost_regex.so.1.74.0 /usr/local/lib/
-COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libboost_system.so.1.74.0 /usr/local/lib/
-COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.74.0 /usr/local/lib/
-COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libgflags.so.2.2 /usr/local/lib/
-COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libglog.so.0 /usr/local/lib/
-COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libopenblas.so.0 /usr/local/lib/
-COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libprotobuf.so.23 /usr/local/lib/
+FROM base as final
+
+RUN apt-get update && apt-get install -y \
+    # caffe dependency
+    libboost_python310.so.1.74.0 \
+    libboost-filesystem1.74.0 \
+    libboost-system1.74.0 \
+    libboost-regex1.74.0 \
+    libboost-thread1.74.0 \
+    libgoogle-glog0v5 \
+    libopenblas0 \
+    libprotobuf23 \
+    libgflags-dev \
+    # clenup
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=caffe_builder /root/caffe/python/caffe /usr/local/python_packages/caffe
+
+ENV LC_ALL=C.UTF-8
 WORKDIR /workspace
