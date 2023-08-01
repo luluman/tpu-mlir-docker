@@ -49,6 +49,22 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmak
     && /tmp/cmake-install.sh --skip-license --prefix=/usr/local \
     && rm /tmp/cmake-install.sh
 
+ARG FLATBUFFERS_VERSION="e2be0c0b0605b38e11a8710a8bae38d7f86a7679"
+RUN git clone https://github.com/google/flatbuffers.git &&\
+    cd flatbuffers && git checkout ${FLATBUFFERS_VERSION} && \
+    mkdir -p build && cd build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && \
+    cmake --build . --target install && \
+    cd / && rm -rf flatbuffers /tmp/* ~/.cache/*
+
+ARG ONEDNN_VERSION="5aabea153825347afa92a2d9f69dd893246bea45"
+RUN git clone https://github.com/oneapi-src/oneDNN.git && \
+    cd oneDNN && git checkout ${ONEDNN_VERSION} && \
+    mkdir -p build && cd build && \
+    cmake .. -DDNNL_CPU_RUNTIME=OMP -DCMAKE_INSTALL_PREFIX=/usr/local && \
+    cmake --build . --target install && \
+    cd / && rm -rf oneDNN /tmp/* ~/.cache/*
+
 # MLIR python dependency
 RUN pip install pybind11-global==2.11.1 numpy==1.24.3 PyYAML==5.4.1 && \
     rm -rf ~/.cache/pip/*
@@ -70,24 +86,6 @@ RUN git clone https://github.com/llvm/llvm-project.git && \
     -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_ENABLE_LLD=ON && \
     cmake --build . --target install && \
     cd / && rm -rf llvm-project /tmp/* ~/.cache/*
-
-ARG FLATBUFFERS_VERSION="e2be0c0b0605b38e11a8710a8bae38d7f86a7679"
-RUN git clone https://github.com/google/flatbuffers.git &&\
-    cd flatbuffers && git checkout ${FLATBUFFERS_VERSION} && \
-    mkdir -p build && cd build && \
-    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local \
-    cmake --build . --target install && \
-    cd / && rm -rf flatbuffers /tmp/* ~/.cache/*
-
-
-ARG ONEDNN_VERSION="5aabea153825347afa92a2d9f69dd893246bea45"
-RUN git clone https://github.com/oneapi-src/oneDNN.git && \
-    cd oneDNN && git checkout ${ONEDNN_VERSION} && \
-    mkdir -p build && cd build && \
-    cmake .. -DDNNL_CPU_RUNTIME=OMP -DCMAKE_INSTALL_PREFIX=/usr/local && \
-    cmake --build . --target install && \
-    cd / && rm -rf oneDNN /tmp/* ~/.cache/*
-
 
 RUN TZ=Asia/Shanghai \
     && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
