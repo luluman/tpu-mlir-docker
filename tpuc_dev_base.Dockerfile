@@ -1,11 +1,6 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04 as builder
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV TZ=Asia/Shanghai
-
-# ********************************************************************************
-#
-# satge 0
-# ********************************************************************************
 
 RUN apt-get update && apt-get install -y apt-transport-https ca-certificates && \
     apt-get install -y build-essential \
@@ -86,4 +81,51 @@ RUN TZ=Asia/Shanghai \
 
 ENV LC_ALL=C.UTF-8
 
+WORKDIR /workspace
+# ********************************************************************************
+#
+# satge 1 caffe
+# ********************************************************************************
+
+FROM builder as builder1
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libboost-all-dev \
+    libgflags-dev \
+    libgoogle-glog-dev \
+    libhdf5-serial-dev \
+    libleveldb-dev \
+    liblmdb-dev \
+    libprotobuf-dev \
+    libsnappy-dev \
+    protobuf-compiler \
+    libopenblas-dev
+# RUN pip install numpy
+WORKDIR /root
+RUN git clone https://github.com/sophgo/caffe.git && \
+    mkdir -p caffe/build && cd caffe/build && \
+    cmake -G Ninja .. \
+    -DCPU_ONLY=ON -DUSE_OPENCV=OFF \
+    -DBLAS=open -DUSE_OPENMP=TRUE \
+    -DCMAKE_CXX_FLAGS=-std=gnu++11 \
+    -Dpython_version="3" \
+    -DCMAKE_INSTALL_PREFIX=caffe && \
+    cmake --build . --target install
+RUN cd /root/caffe/python/caffe && rm _caffe.so && cp /root/caffe/build/lib/_caffe.so .
+
+# ********************************************************************************
+#
+# satge 2 
+# ********************************************************************************
+FROM builder as builder2
+COPY --from=builder1 /root/caffe/python/caffe /usr/local/python_packages/caffe
+COPY --from=builder1 /root/caffe/src/caffe/proto /usr/local/python_packages/proto
+COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.74.0 /usr/local/lib/
+COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libboost_python310.so.1.74.0 /usr/local/lib/
+COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libboost_regex.so.1.74.0 /usr/local/lib/
+COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libboost_system.so.1.74.0 /usr/local/lib/
+COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.74.0 /usr/local/lib/
+COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libgflags.so.2.2 /usr/local/lib/
+COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libglog.so.0 /usr/local/lib/
+COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libopenblas.so.0 /usr/local/lib/
+COPY --from=builder1 /usr/lib/x86_64-linux-gnu/libprotobuf.so.23 /usr/local/lib/
 WORKDIR /workspace
