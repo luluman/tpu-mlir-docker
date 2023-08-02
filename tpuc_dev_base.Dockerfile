@@ -65,38 +65,9 @@ RUN git clone https://github.com/oneapi-src/oneDNN.git && \
     cmake --build . --target install && \
     cd / && rm -rf oneDNN /tmp/* ~/.cache/*
 
-# MLIR python dependency
+# MLIR&Caffe python dependency
 RUN pip install pybind11-global==2.11.1 numpy==1.24.3 PyYAML==5.4.1 && \
     rm -rf ~/.cache/pip/*
-
-ARG LLVM_VERSION="c67e443895d5b922d1ffc282d23ca31f7161d4fb"
-RUN git clone https://github.com/llvm/llvm-project.git && \
-    cd llvm-project/ && \
-    git checkout ${LLVM_VERSION} && \
-    mkdir build && cd build && \
-    cmake -G Ninja ../llvm \
-    -DLLVM_ENABLE_PROJECTS="mlir" \
-    -DLLVM_TARGETS_TO_BUILD="" \
-    -DLLVM_ENABLE_ASSERTIONS=ON \
-    -DLLVM_INCLUDE_TESTS=OFF \
-    -DMLIR_INCLUDE_TESTS=OFF \
-    -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=/usr/local \
-    -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_ENABLE_LLD=ON && \
-    cmake --build . --target install && \
-    cd / && rm -rf llvm-project /tmp/* ~/.cache/*
-
-RUN TZ=Asia/Shanghai \
-    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
-    && echo $TZ > /etc/timezone \
-    && dpkg-reconfigure -f noninteractive tzdata \
-    # install some fonts
-    && wget "http://mirrors.ctan.org/fonts/fandol.zip" -O /usr/share/fonts/fandol.zip \
-    && unzip /usr/share/fonts/fandol.zip -d /usr/share/fonts \
-    && rm /usr/share/fonts/fandol.zip \
-    && git config --global --add safe.directory '*' \
-    && rm -rf /tmp/*
 
 # ********************************************************************************
 #
@@ -131,19 +102,55 @@ RUN git clone https://github.com/sophgo/caffe.git && \
     cmake --build . --target install
 RUN cd /root/caffe/python/caffe && \
     rm _caffe.so && \
-    cp -f /root/caffe/build/lib/_caffe.so . \
+    cp -f /root/caffe/build/lib/_caffe.so . && \
     cp -rf /root/caffe/src/caffe/proto .
+
+# ********************************************************************************
+#
+# stage 2: MLIR
+# ********************************************************************************
+FROM base as mlir_builder
+
+ARG LLVM_VERSION="c67e443895d5b922d1ffc282d23ca31f7161d4fb"
+RUN git clone https://github.com/llvm/llvm-project.git && \
+    cd llvm-project/ && \
+    git checkout ${LLVM_VERSION} && \
+    mkdir build && cd build && \
+    cmake -G Ninja ../llvm \
+    -DLLVM_ENABLE_PROJECTS="mlir" \
+    -DLLVM_TARGETS_TO_BUILD="" \
+    -DLLVM_ENABLE_ASSERTIONS=ON \
+    -DLLVM_INCLUDE_TESTS=OFF \
+    -DMLIR_INCLUDE_TESTS=OFF \
+    -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_ENABLE_LLD=ON && \
+    cmake --build . --target install && \
+    cd / && rm -rf llvm-project /tmp/* ~/.cache/*
+
+RUN TZ=Asia/Shanghai \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone \
+    && dpkg-reconfigure -f noninteractive tzdata \
+    # install some fonts
+    && wget "http://mirrors.ctan.org/fonts/fandol.zip" -O /usr/share/fonts/fandol.zip \
+    && unzip /usr/share/fonts/fandol.zip -d /usr/share/fonts \
+    && rm /usr/share/fonts/fandol.zip \
+    && git config --global --add safe.directory '*' \
+    && rm -rf /tmp/*
+
 
 
 # ********************************************************************************
 #
 # stage 2: final
 # ********************************************************************************
-FROM base as final
+FROM mlir_builder as final
 
 RUN apt-get update && apt-get install -y \
     # caffe dependency
-    libboost_python310.so.1.74.0 \
+    libboost-python1.74.0 \
     libboost-filesystem1.74.0 \
     libboost-system1.74.0 \
     libboost-regex1.74.0 \
@@ -151,7 +158,7 @@ RUN apt-get update && apt-get install -y \
     libgoogle-glog0v5 \
     libopenblas0 \
     libprotobuf23 \
-    libgflags-dev \
+    libgflags-dev && \
     # clenup
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
