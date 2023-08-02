@@ -130,6 +130,7 @@ RUN git clone https://github.com/sophgo/caffe.git && \
     -DCMAKE_INSTALL_PREFIX=caffe && \
     cmake --build . --target install
 RUN cd /root/caffe/python/caffe && \
+    rm _caffe.so && \
     cp -f /root/caffe/build/lib/_caffe.so . \
     cp -rf /root/caffe/src/caffe/proto .
 
