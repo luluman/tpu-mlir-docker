@@ -99,7 +99,6 @@ RUN git clone https://github.com/sophgo/caffe.git && \
     cmake -G Ninja .. \
     -DCPU_ONLY=ON -DUSE_OPENCV=OFF \
     -DBLAS=open -DUSE_OPENMP=TRUE \
-    -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
     -DCMAKE_CXX_FLAGS=-std=gnu++11 \
     -Dpython_version="3" \
     -DCMAKE_INSTALL_PREFIX=caffe && \
