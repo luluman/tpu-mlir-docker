@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates && 
     curl wget \
     unzip \
     graphviz \
+    bsdmainutils \
     gdb \
     ccache \
     clang lld lldb clang-format \
@@ -33,7 +34,9 @@ RUN apt-get update && apt-get install -y apt-transport-https ca-certificates && 
     libgl1 \
     libnuma1 libatlas-base-dev \
     # for document
-    texlive-xetex && \
+    texlive-xetex \
+    # fix bug: https://bugs.archlinux.org/task/67856
+    texlive-lang-chinese && \
     # clenup
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -61,7 +64,8 @@ ARG ONEDNN_VERSION="5aabea153825347afa92a2d9f69dd893246bea45"
 RUN git clone https://github.com/oneapi-src/oneDNN.git && \
     cd oneDNN && git checkout ${ONEDNN_VERSION} && \
     mkdir -p build && cd build && \
-    cmake .. -DDNNL_CPU_RUNTIME=OMP \
+    cmake -G Ninja .. \
+    -DDNNL_CPU_RUNTIME=OMP \
     -DDNNL_BUILD_TESTS=OFF \
     -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
     -DCMAKE_INSTALL_PREFIX=/usr/local && \
