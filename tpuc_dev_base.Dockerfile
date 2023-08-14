@@ -125,6 +125,7 @@ RUN git clone https://github.com/llvm/llvm-project.git && \
     mkdir build && cd build && \
     cmake -G Ninja ../llvm \
     -DLLVM_ENABLE_PROJECTS="mlir" \
+    -DLLVM_INSTALL_UTILS=ON \
     -DLLVM_TARGETS_TO_BUILD="" \
     -DLLVM_ENABLE_ASSERTIONS=ON \
     -DLLVM_INCLUDE_TESTS=OFF \
