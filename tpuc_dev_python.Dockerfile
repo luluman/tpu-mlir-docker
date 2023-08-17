@@ -4,7 +4,7 @@ ENV TZ=Asia/Shanghai
 
 WORKDIR /workspace
 COPY requirements.txt ./
-RUN pip3 install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
-RUN rm -rf ~/.cache/pip/* requirements.txt
+RUN pip3 install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu && \
+    rm -rf ~/.cache/pip/* requirements.txt
 
 ENV LC_ALL=C.UTF-8
