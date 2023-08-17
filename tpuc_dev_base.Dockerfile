@@ -7,7 +7,8 @@ ENV TZ=Asia/Shanghai
 # stage 0: base
 # ********************************************************************************
 
-RUN apt-get update && apt-get install -y apt-transport-https ca-certificates && \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-transport-https ca-certificates && \
     apt-get install -y build-essential \
     git vim sudo \
     # python
@@ -156,7 +157,7 @@ RUN TZ=Asia/Shanghai \
 # ********************************************************************************
 FROM mlir_builder as final
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     # caffe dependency
     libboost-python1.74.0 \
     libboost-filesystem1.74.0 \
