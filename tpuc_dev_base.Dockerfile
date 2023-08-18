@@ -8,8 +8,7 @@ ENV TZ=Asia/Shanghai
 # ********************************************************************************
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    apt-transport-https ca-certificates && \
-    apt-get install -y build-essential \
+    apt-transport-https ca-certificates build-essential \
     git vim sudo \
     # python
     python3-dev \
@@ -129,8 +128,8 @@ RUN git clone https://github.com/llvm/llvm-project.git && \
     -DLLVM_INSTALL_UTILS=ON \
     -DLLVM_TARGETS_TO_BUILD="" \
     -DLLVM_ENABLE_ASSERTIONS=ON \
-    -DLLVM_INCLUDE_TESTS=OFF \
     -DMLIR_INCLUDE_TESTS=OFF \
+    -DLLVM_INSTALL_GTEST=ON \
     -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr/local \
