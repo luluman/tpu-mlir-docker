@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bsdmainutils \
     gdb \
     ccache \
+    catch2 \
+    git-lfs \
     clang lld lldb clang-format \
     libomp-dev \
     # for opencv
