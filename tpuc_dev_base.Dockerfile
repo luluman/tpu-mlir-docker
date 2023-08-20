@@ -28,7 +28,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bsdmainutils \
     gdb \
     ccache \
-    catch2 \
     git-lfs \
     clang lld lldb clang-format \
     libomp-dev \
@@ -45,7 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
 
-ENV CMAKE_VERSION 3.25.3
+ENV CMAKE_VERSION 3.27.3
 
 RUN wget https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION-linux-x86_64.sh \
     --no-check-certificate \
@@ -53,6 +52,14 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmak
     && chmod u+x /tmp/cmake-install.sh \
     && /tmp/cmake-install.sh --skip-license --prefix=/usr/local \
     && rm /tmp/cmake-install.sh
+
+ENV CATCH3_VERSION 3.4.0
+
+RUN git clone --branch v${CATCH3_VERSION} https://github.com/catchorg/Catch2.git && \
+    cd Catch2 && \
+    cmake -Bbuild -H. -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local && \
+    cmake --build build/ --target install && \
+    rm -rf /Catch2 /tmp/* ~/.cache/*
 
 ARG FLATBUFFERS_VERSION="e2be0c0b0605b38e11a8710a8bae38d7f86a7679"
 RUN git clone https://github.com/google/flatbuffers.git &&\
